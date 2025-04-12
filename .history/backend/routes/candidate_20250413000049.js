@@ -3,19 +3,12 @@ const router = express.Router();
 const uploadCVMiddleware = require("../middleware/uploadCV");
 const candidateController = require("../controllers/candidateController");
 const verifyToken = require("../middleware/verifyToken");
-const uploadAvatar = require("../middleware/uploadAvatar");
+
 // Route upload CV
 
 router.get("/me", verifyToken, candidateController.getMyInfo);
 router.get("/:id", candidateController.getCandidateInfoByID);
-router.put("/updateInfo", verifyToken, candidateController.updateMyInfo);
-
-router.put(
-  "/me/avatar",
-  verifyToken,
-  uploadAvatar.single("avatar"),
-  candidateController.updateMyAvatar
-);
+router.get("/updateInfo", verifyToken, candidateController.updateMyInfo);
 router.post(
   "/upload-cv/:id",
   verifyToken,

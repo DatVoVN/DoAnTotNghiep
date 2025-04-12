@@ -296,5 +296,4 @@ module.exports = {
   getMyInfo,
   updateCV,
   updateMyInfo,
-  updateMyAvatar,
 };

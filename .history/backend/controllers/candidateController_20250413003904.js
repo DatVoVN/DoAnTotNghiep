@@ -163,6 +163,7 @@ const updateMyInfo = async (req, res) => {
       gender,
       dateOfBirth,
       address,
+      avatarUrl,
       // Thêm các trường tùy chỉnh khác nếu có trong schema và muốn cho phép cập nhật
     } = req.body;
 
@@ -171,6 +172,7 @@ const updateMyInfo = async (req, res) => {
     if (fullName !== undefined) allowedUpdates.fullName = fullName;
     if (phone !== undefined) allowedUpdates.phone = phone;
     if (gender !== undefined) allowedUpdates.gender = gender;
+    if (avatarUrl !== undefined) allowedUpdates.avatarUrl = avatarUrl;
     if (dateOfBirth !== undefined) {
       // Chuyển đổi dateOfBirth thành đối tượng Date nếu nó là chuỗi
       const dob = new Date(dateOfBirth);
@@ -225,76 +227,11 @@ const updateMyInfo = async (req, res) => {
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
-const updateMyAvatar = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const candidate = await Candidate.findById(userId);
 
-    if (!candidate) {
-      // Xóa file vừa upload nếu user không tồn tại (mặc dù middleware auth nên bắt trước)
-      if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-        deleteFileIfExists(req.file.path); // Dùng đường dẫn tuyệt đối nếu có
-      }
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy thông tin người dùng." });
-    }
-
-    // Kiểm tra xem có file được upload không
-    if (!req.file) {
-      return res
-        .status(400)
-        .json({ message: "Vui lòng chọn file ảnh đại diện." });
-    }
-
-    // Xóa ảnh đại diện cũ nếu có
-    if (candidate.avatarUrl) {
-      deleteFileIfExists(candidate.avatarUrl);
-    }
-
-    // Cập nhật đường dẫn ảnh đại diện mới (lưu đường dẫn tương đối)
-    // Đảm bảo thư mục uploads/avatars tồn tại và có thể truy cập công khai
-    const newAvatarUrl = `/uploads/avatars/${req.file.filename}`;
-    candidate.avatarUrl = newAvatarUrl;
-    candidate.updatedAt = Date.now(); // Cập nhật thời gian
-
-    // Lưu thay đổi vào database
-    await candidate.save();
-
-    res.status(200).json({
-      message: "Cập nhật ảnh đại diện thành công.",
-      avatarUrl: newAvatarUrl, // Trả về đường dẫn mới
-    });
-  } catch (err) {
-    console.error("Error updating avatar:", err);
-    // Xóa file vừa upload nếu có lỗi xảy ra trong quá trình xử lý DB
-    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-      console.log(
-        `Attempting to delete uploaded avatar file due to error: ${req.file.path}`
-      );
-      // Chuyển đổi path tương đối nếu cần trước khi xóa
-      deleteFileIfExists(req.file.path); // Thử xóa bằng helper
-    }
-    // Xử lý lỗi Validation (ít gặp với upload file trừ khi có hook phức tạp)
-    if (err.name === "ValidationError") {
-      const errors = Object.values(err.errors).map((el) => ({
-        field: el.path,
-        message: el.message,
-      }));
-      return res
-        .status(400)
-        .json({ message: "Lỗi validation khi lưu avatar.", errors: errors });
-    }
-    res
-      .status(500)
-      .json({ message: "Lỗi server khi cập nhật avatar.", error: err.message });
-  }
-};
 module.exports = {
   uploadCV,
   getCandidateInfoByID,
   getMyInfo,
   updateCV,
   updateMyInfo,
-  updateMyAvatar,
 };

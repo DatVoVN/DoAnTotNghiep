@@ -12,7 +12,7 @@ router.put("/updateInfo", verifyToken, candidateController.updateMyInfo);
 
 router.put(
   "/me/avatar",
-  verifyToken,
+  authMiddleware,
   uploadAvatar.single("avatar"),
   candidateController.updateMyAvatar
 );
